@@ -3,36 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <title>QR kód generátor</title>
+
     <style>
         body {
             font-family: Arial, sans-serif;
+            background: #f7f7f7;
             padding: 20px;
+            max-width: 900px;
+            margin: auto;
         }
 
-        .item {
-            margin-bottom: 24px;
-        }
-
-        .name {
-            font-size: 16px;
+        h2 {
+            font-size: 22px;
             font-weight: bold;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
             margin-bottom: 6px;
         }
 
-        img {
-            width: 200px;
-            height: 200px;
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cfcfcf;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            background: white;
+            font-size: 15px;
+        }
+
+        .error {
+            background: #ffb3b3 !important;
+        }
+
+        .row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .row > div {
+            flex: 1;
         }
 
         .child-box {
-            border: 1px solid #ccc;
-            padding: 12px;
-            margin-bottom: 12px;
+            background: white;
+            border: 1px solid #dcdcdc;
+            padding: 15px;
             border-radius: 6px;
+            margin-bottom: 15px;
         }
 
         button {
+            padding: 10px 18px;
+            background: #4a8df6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background: #3c7de0;
+        }
+
+        .delete-btn {
+            background: #d9534f;
+            margin-top: 5px;
+        }
+
+        .delete-btn:hover {
+            background: #c64541;
+        }
+
+        .delete-btn.disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        #qrViewer {
+            margin-top: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        #qrViewer img {
+            width: 250px;
+            height: 250px;
+        }
+
+        #navButtons {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        #counter {
             margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -41,89 +119,181 @@
 
     <h2>Kísérő adatai</h2>
 
-    <label>Név:</label><br>
-    <input id="parentName" type="text" placeholder="Kísérő neve"><br><br>
+    <div class="row">
+        <div>
+            <label>Vezetéknév *</label>
+            <input id="parentLast" type="text">
+        </div>
+        <div>
+            <label>Keresztnév *</label>
+            <input id="parentFirst" type="text">
+        </div>
+    </div>
 
-    <label>Telefonszám:</label><br>
-    <input id="parentPhone" type="text" placeholder="+36 30 1234567"><br><br>
+    <label>Email cím *</label>
+    <input id="parentEmail" type="email">
 
-    <label>Település:</label><br>
-    <input id="city" type="text" placeholder="Település"><br><br>
+    <div class="row">
+        <div>
+            <label>Országkód *</label>
+            <input id="phoneCountry" type="text" placeholder="+36">
+        </div>
+        <div>
+            <label>Szolgáltató *</label>
+            <input id="phoneProvider" type="text" placeholder="20/30/70">
+        </div>
+        <div>
+            <label>Telefonszám *</label>
+            <input id="phoneNumber" type="text" placeholder="1234567">
+        </div>
+    </div>
 
-    <h2>Gyerekek</h2>
+    <label>Település *</label>
+    <input id="city" type="text">
+
+    <h2>Gyerek lista</h2>
 
     <div id="children"></div>
 
-    <button onclick="addChild()">+ Gyerek hozzáadása</button>
+    <button onclick="addChild()">+ További gyerek hozzáadása</button>
 
     <br><br>
     <button onclick="generateQRCodes()">Elküld</button>
 
-    <h2>QR kódok</h2>
-    <div id="qrContainer"></div>
+    <div id="qrViewer" style="display:none;">
+        <div id="qrContent"></div>
+
+        <div id="navButtons">
+            <button onclick="prevQR()">⬅️</button>
+            <button onclick="nextQR()">➡️</button>
+        </div>
+
+        <div id="counter"></div>
+    </div>
 
     <script>
-        function addChild() {
+        let qrList = [];
+        let currentIndex = 0;
+
+        function addChild(name = "", age = "", leave = "Mise előtt", note = "", isFirst = false) {
             const container = document.getElementById("children");
 
             const div = document.createElement("div");
             div.className = "child-box";
 
             div.innerHTML = `
-                <label>Gyerek neve:</label><br>
-                <input type="text" class="child-name" placeholder="Név"><br><br>
+                <label>Gyerek neve *</label>
+                <input type="text" class="child-name" value="${name}">
 
-                <label>Életkor:</label><br>
-                <input type="number" class="child-age" placeholder="Életkor"><br><br>
+                <label>Életkor *</label>
+                <input type="number" class="child-age" value="${age}">
 
-                <label>Mikor távozik?</label><br>
+                <label>Mikor távozik? *</label>
                 <select class="child-leave">
-                    <option value="Mise előtt">Mise előtt</option>
-                    <option value="Mise után">Mise után</option>
-                </select><br><br>
+                    <option value="Mise előtt" ${leave === "Mise előtt" ? "selected" : ""}>Mise előtt</option>
+                    <option value="Mise után" ${leave === "Mise után" ? "selected" : ""}>Mise után</option>
+                </select>
 
-                <label>Allergiák / megjegyzés:</label><br>
-                <input type="text" class="child-note" placeholder="pl. méhcsípés"><br><br>
+                <label>Allergiák és egyéb tudnivalók</label>
+                <input type="text" class="child-note" value="${note}">
 
-                <button onclick="this.parentElement.remove()">Gyerek törlése</button>
+                <button class="delete-btn ${isFirst ? "disabled" : ""}" ${isFirst ? "disabled" : ""} onclick="removeChild(this)">Gyerek törlése</button>
             `;
 
             container.appendChild(div);
         }
 
-        function generateQRCodes() {
-            const parentName = document.getElementById("parentName").value.trim();
-            const parentPhone = document.getElementById("parentPhone").value.trim();
-            const city = document.getElementById("city").value.trim();
+        function removeChild(btn) {
+            if (btn.classList.contains("disabled")) return;
+            btn.parentElement.remove();
+        }
 
-            const qrContainer = document.getElementById("qrContainer");
-            qrContainer.innerHTML = "";
+        function markError(input, condition) {
+            if (condition) input.classList.add("error");
+            else input.classList.remove("error");
+            return condition;
+        }
+
+        function generateQRCodes() {
+            qrList = [];
+            currentIndex = 0;
+
+            const parentLast = document.getElementById("parentLast");
+            const parentFirst = document.getElementById("parentFirst");
+            const parentEmail = document.getElementById("parentEmail");
+            const phoneCountry = document.getElementById("phoneCountry");
+            const phoneProvider = document.getElementById("phoneProvider");
+            const phoneNumber = document.getElementById("phoneNumber");
+            const city = document.getElementById("city");
+
+            let hasError = false;
+
+            hasError |= markError(parentLast, parentLast.value.trim() === "");
+            hasError |= markError(parentFirst, parentFirst.value.trim() === "");
+            hasError |= markError(parentEmail, parentEmail.value.trim() === "");
+            hasError |= markError(phoneCountry, phoneCountry.value.trim() === "");
+            hasError |= markError(phoneProvider, phoneProvider.value.trim() === "");
+            hasError |= markError(phoneNumber, phoneNumber.value.trim() === "");
+            hasError |= markError(city, city.value.trim() === "");
+
+            if (hasError) return;
+
+            const fullPhone = `${phoneCountry.value.trim()} ${phoneProvider.value.trim()} ${phoneNumber.value.trim()}`;
+            const parentName = `${parentLast.value.trim()} ${parentFirst.value.trim()}`;
 
             const children = document.querySelectorAll(".child-box");
 
             children.forEach(child => {
-                const name = child.querySelector(".child-name").value.trim();
-                const age = child.querySelector(".child-age").value.trim();
-                const leave = child.querySelector(".child-leave").value.trim();
-                const note = child.querySelector(".child-note").value.trim() || "nincs";
+                const nameInput = child.querySelector(".child-name");
+                const ageInput = child.querySelector(".child-age");
+                const leaveInput = child.querySelector(".child-leave");
+                const noteInput = child.querySelector(".child-note");
 
-                const data = `${parentName}|${parentPhone}|${name}|${age}|${leave}|${note}`;
+                let childError = false;
+
+                childError |= markError(nameInput, nameInput.value.trim() === "");
+                childError |= markError(ageInput, ageInput.value.trim() === "");
+                childError |= markError(leaveInput, leaveInput.value.trim() === "");
+
+                if (childError) return;
+
+                const data = `${parentName}|${fullPhone}|${nameInput.value.trim()}|${ageInput.value.trim()}|${leaveInput.value.trim()}|${noteInput.value.trim() || "nincs"}`;
 
                 const qrUrl =
                     "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" +
                     encodeURIComponent(data);
 
-                const div = document.createElement("div");
-                div.className = "item";
-
-                div.innerHTML = `
-                    <div class="name">${name}</div>
-                    <img src="${qrUrl}" alt="QR kód">
-                `;
-
-                qrContainer.appendChild(div);
+                qrList.push({ name: nameInput.value.trim(), url: qrUrl });
             });
+
+            if (qrList.length === 0) return;
+
+            document.getElementById("qrViewer").style.display = "block";
+            showQR(0);
         }
+
+        function showQR(index) {
+            currentIndex = index;
+
+            const qr = qrList[index];
+            document.getElementById("qrContent").innerHTML = `
+                <div class="name">${qr.name}</div>
+                <img src="${qr.url}">
+            `;
+
+            document.getElementById("counter").innerText =
+                `${index + 1} / ${qrList.length}`;
+        }
+
+        function prevQR() {
+            if (currentIndex > 0) showQR(currentIndex - 1);
+        }
+
+        function nextQR() {
+            if (currentIndex < qrList.length - 1) showQR(currentIndex + 1);
+        }
+
+        addChild("", "", "Mise előtt", "", true);
     </script>
 
 </body>
