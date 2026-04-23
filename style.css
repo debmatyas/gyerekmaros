@@ -120,10 +120,19 @@ button:hover {
 
     input,
     select {
-        width: 100% !important;
+        font-size: 1.1em;
     }
 
-    .child-box {
-        padding: 12px;
+    select option {
+        font-size: 0.9em;
+    }
+
+    label {
+        font-size: 1.1em;
+    }
+
+    h2 {
+        font-size: 1.4em;
     }
 }
+
