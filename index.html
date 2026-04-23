@@ -23,63 +23,108 @@
             width: 200px;
             height: 200px;
         }
+
+        .child-box {
+            border: 1px solid #ccc;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+        }
+
+        button {
+            margin-top: 10px;
+        }
     </style>
 </head>
 
 <body>
 
-    <div id="container">
-        <div class="item">
-            <div class="name">Attila</div>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&amp;data=M%C3%A1ty%C3%A1s%20Debreceni%7C%2B36%2030%205117575%7CAttila%7C17%7CMise%20el%C5%91tt%7Cnincs"
-                alt="QR kód">
-        </div>
-        <div class="item">
-            <div class="name">Alma</div>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&amp;data=M%C3%A1ty%C3%A1s%20Debreceni%7C%2B36%2030%205117575%7CAlma%7C14%7CMise%20el%C5%91tt%7Ceeper"
-                alt="QR kód">
-        </div>
-    </div>
+    <h2>Kísérő adatai</h2>
+
+    <label>Név:</label><br>
+    <input id="parentName" type="text" placeholder="Kísérő neve"><br><br>
+
+    <label>Telefonszám:</label><br>
+    <input id="parentPhone" type="text" placeholder="+36 30 1234567"><br><br>
+
+    <label>Település:</label><br>
+    <input id="city" type="text" placeholder="Település"><br><br>
+
+    <h2>Gyerekek</h2>
+
+    <div id="children"></div>
+
+    <button onclick="addChild()">+ Gyerek hozzáadása</button>
+
+    <br><br>
+    <button onclick="generateQRCodes()">Elküld</button>
+
+    <h2>QR kódok</h2>
+    <div id="qrContainer"></div>
 
     <script>
-        function renderQRCodes() {
-            const params = new URLSearchParams(window.location.search);
-            const items = params.getAll("data");
+        function addChild() {
+            const container = document.getElementById("children");
 
-            const container = document.getElementById("container");
+            const div = document.createElement("div");
+            div.className = "child-box";
 
-            if (items.length === 0) {
-                container.innerHTML = "<p>Nincs data paraméter.</p>";
-                return;
-            }
+            div.innerHTML = `
+                <label>Gyerek neve:</label><br>
+                <input type="text" class="child-name" placeholder="Név"><br><br>
 
-            items.forEach(raw => {
-                const decoded = decodeURIComponent(raw.trim());
-                const parts = decoded.split("|");
+                <label>Életkor:</label><br>
+                <input type="number" class="child-age" placeholder="Életkor"><br><br>
 
-                // A név a 3. elem (index 2)
-                const name = parts[2] ? parts[2].trim() : "Név ismeretlen";
+                <label>Mikor távozik?</label><br>
+                <select class="child-leave">
+                    <option value="Mise előtt">Mise előtt</option>
+                    <option value="Mise után">Mise után</option>
+                </select><br><br>
+
+                <label>Allergiák / megjegyzés:</label><br>
+                <input type="text" class="child-note" placeholder="pl. méhcsípés"><br><br>
+
+                <button onclick="this.parentElement.remove()">Gyerek törlése</button>
+            `;
+
+            container.appendChild(div);
+        }
+
+        function generateQRCodes() {
+            const parentName = document.getElementById("parentName").value.trim();
+            const parentPhone = document.getElementById("parentPhone").value.trim();
+            const city = document.getElementById("city").value.trim();
+
+            const qrContainer = document.getElementById("qrContainer");
+            qrContainer.innerHTML = "";
+
+            const children = document.querySelectorAll(".child-box");
+
+            children.forEach(child => {
+                const name = child.querySelector(".child-name").value.trim();
+                const age = child.querySelector(".child-age").value.trim();
+                const leave = child.querySelector(".child-leave").value.trim();
+                const note = child.querySelector(".child-note").value.trim() || "nincs";
+
+                const data = `${parentName}|${parentPhone}|${name}|${age}|${leave}|${note}`;
 
                 const qrUrl =
                     "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" +
-                    encodeURIComponent(decoded);
+                    encodeURIComponent(data);
 
                 const div = document.createElement("div");
                 div.className = "item";
 
                 div.innerHTML = `
-      <div class="name">${name}</div>
-      <img src="${qrUrl}" alt="QR kód">
-    `;
+                    <div class="name">${name}</div>
+                    <img src="${qrUrl}" alt="QR kód">
+                `;
 
-                container.appendChild(div);
+                qrContainer.appendChild(div);
             });
         }
-
-        renderQRCodes();
     </script>
-
-
 
 </body>
 
