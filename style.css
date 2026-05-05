@@ -106,33 +106,5 @@ button:hover {
     font-weight: bold;
 }
 
-/* --- MOBIL nézet: minden egymás alá kerül --- */
-@media (max-width: 600px) {
 
-    .row {
-        flex-direction: column !important;
-    }
-
-    .row > div {
-        width: 100% !important;
-        flex: none !important;
-    }
-
-    input,
-    select {
-        font-size: 1.1em;
-    }
-
-    select option {
-        font-size: 0.9em;
-    }
-
-    label {
-        font-size: 1.1em;
-    }
-
-    h2 {
-        font-size: 1.4em;
-    }
-}
 

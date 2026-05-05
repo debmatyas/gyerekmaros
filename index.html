@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="hu">
 
 <head>
@@ -46,17 +47,17 @@
 
     <div id="children"></div>
 
-    <button onclick="addChild()">+ További gyerek hozzáadása</button>
+    <button type="button" onclick="addChild()">+ További gyerek hozzáadása</button>
 
     <br><br>
-    <button onclick="generateQRCodes()">Elküld</button>
+    <button type="button" onclick="generateQRCodes()">Elküld</button>
 
     <div id="qrViewer" style="display:none;">
         <div id="qrContent"></div>
 
         <div id="navButtons">
-            <button onclick="prevQR()">⬅️</button>
-            <button onclick="nextQR()">➡️</button>
+            <button type="button" onclick="prevQR()">⬅️</button>
+            <button type="button" onclick="nextQR()">➡️</button>
         </div>
 
         <div id="counter"></div>
@@ -66,7 +67,7 @@
         let qrList = [];
         let currentIndex = 0;
 
-        function addChild(name = "", age = "", leave = "Mise előtt", note = "", isFirst = false) {
+        function addChild(name = "", age = "", leave = "Mise előtt", note = "") {
             const container = document.getElementById("children");
 
             const div = document.createElement("div");
@@ -88,16 +89,19 @@
                 <label>Allergiák és egyéb tudnivalók</label>
                 <input type="text" class="child-note" value="${note}">
 
-                <button class="delete-btn ${isFirst ? "disabled" : ""}" ${isFirst ? "disabled" : ""} onclick="removeChild(this)">Gyerek törlése</button>
+                <button type="button" class="delete-btn">Gyerek törlése</button>
             `;
 
             container.appendChild(div);
         }
 
-        function removeChild(btn) {
-            if (btn.classList.contains("disabled")) return;
-            btn.parentElement.remove();
-        }
+        // 🔥 ESEMÉNYDELEGÁLÁS – EZ MINDIG MŰKÖDIK
+        document.getElementById("children").addEventListener("click", function(e) {
+            if (e.target.classList.contains("delete-btn")) {
+                const box = e.target.parentNode;
+                if (box) box.remove();
+            }
+        });
 
         function markError(input, condition) {
             if (condition) input.classList.add("error");
@@ -184,7 +188,7 @@
             if (currentIndex < qrList.length - 1) showQR(currentIndex + 1);
         }
 
-        addChild("", "", "Mise előtt", "", true);
+        addChild();
     </script>
 
 </body>
